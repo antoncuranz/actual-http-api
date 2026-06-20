@@ -48,7 +48,7 @@ module.exports = router;
  *       schema:
  *         type: string
  *       required: false
- *       description: Optional encryption password for end-to-end encrypted budgets. Only needed in the first interaction with the encrypted budget, subsequent requests don't need to provide this value
+ *       description: Optional encryption password for end-to-end encrypted budgets. You may need to provide it again after a service restart or Actual API client reset before reopening a cached encrypted budget
  *   schemas:
  *     GeneralError:
  *      type: object
