@@ -6,7 +6,6 @@ on:
     tags: [ '*.*.*' ]
   # Removed pull_request trigger to avoid running CI on Dependabot PRs
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
