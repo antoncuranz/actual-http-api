@@ -140,20 +140,65 @@ describe('Budget Module', () => {
     }));
     getActualDataDir.mockReturnValue('/data/actual');
     archiver.ZipArchive.mockImplementation(() => mockArchive);
+    fs.existsSync.mockReturnValue(true);
     path.join.mockImplementation((...args) => args.join('/'));
   });
 
   describe('Budget Initialization', () => {
     it('should download budget when syncId is not cached', async () => {
-      const budget = await Budget('sync-new', undefined);
+      await Budget('sync-new', undefined);
       expect(mockActualApi.downloadBudget).toHaveBeenCalledWith('sync-new');
     });
 
     it('should download budget with password when provided', async () => {
-      const budget = await Budget('sync-pwd', 'password123');
+      await Budget('sync-pwd', 'password123');
       expect(mockActualApi.downloadBudget).toHaveBeenCalledWith('sync-pwd', {
         password: 'password123'
       });
+    });
+
+    it('should load and sync cached budgets when no password is provided', async () => {
+      getFileContent.mockReturnValueOnce(JSON.stringify({
+        id: 'budget-cached-plain',
+        groupId: 'sync-cached-plain',
+        name: 'Cached Plain Budget'
+      }));
+
+      await Budget('sync-cached-plain');
+
+      jest.clearAllMocks();
+      getActualApiClient.mockResolvedValue(mockActualApi);
+
+      await Budget('sync-cached-plain');
+
+      expect(mockActualApi.loadBudget).toHaveBeenCalledWith('budget-cached-plain');
+      expect(mockActualApi.sync).toHaveBeenCalledTimes(1);
+      expect(mockActualApi.downloadBudget).not.toHaveBeenCalled();
+      expect(listSubDirectories).not.toHaveBeenCalled();
+      expect(getFileContent).not.toHaveBeenCalled();
+    });
+
+    it('should download cached budgets with password instead of loading and syncing', async () => {
+      getFileContent.mockReturnValueOnce(JSON.stringify({
+        id: 'budget-cached-encrypted',
+        groupId: 'sync-cached-encrypted',
+        name: 'Cached Encrypted Budget'
+      }));
+
+      await Budget('sync-cached-encrypted', 'first-password');
+
+      jest.clearAllMocks();
+      getActualApiClient.mockResolvedValue(mockActualApi);
+
+      await Budget('sync-cached-encrypted', 'reopen-password');
+
+      expect(mockActualApi.downloadBudget).toHaveBeenCalledWith('sync-cached-encrypted', {
+        password: 'reopen-password'
+      });
+      expect(mockActualApi.loadBudget).not.toHaveBeenCalled();
+      expect(mockActualApi.sync).not.toHaveBeenCalled();
+      expect(listSubDirectories).not.toHaveBeenCalled();
+      expect(getFileContent).not.toHaveBeenCalled();
     });
   });
 

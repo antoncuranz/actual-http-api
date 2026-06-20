@@ -10,8 +10,14 @@ let syncIdToBudgetId = {};
 async function Budget(budgetSyncId, budgetEncryptionPassword) {
   const actualApi = await getActualApiClient();
   if (budgetSyncId in syncIdToBudgetId) {
-    await actualApi.loadBudget(syncIdToBudgetId[budgetSyncId]);
-    await actualApi.sync();
+    if (budgetEncryptionPassword) {
+      await actualApi.downloadBudget(budgetSyncId, {
+        password: budgetEncryptionPassword
+      });
+    } else {
+      await actualApi.loadBudget(syncIdToBudgetId[budgetSyncId]);
+      await actualApi.sync();
+    }
   } else {
     if (budgetEncryptionPassword) {
       await actualApi.downloadBudget(budgetSyncId, {
